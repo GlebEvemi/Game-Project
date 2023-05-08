@@ -19,51 +19,46 @@ class Character:
         self.alive = True
         self.player_surf = pygame.image.load('player_walk_1.png').convert_alpha()
         self.player_rect = self.player_surf.get_rect(topleft=(400, 200))
+Player = Character()
 
 class Slime:
     def __init__(self, health = 100):
         self.health = health
         self.slime_surf = pygame.image.load('Test1.png').convert_alpha()
-        self.slime_rect = self.slime_surf.get_rect(topleft = (random.randint(1930, 2100), random.randint(1080, 1200)))
+        self.slime_rect = self.slime_surf.get_rect(topleft =(800, 800))
     def movement(self):
-        while Player.alive:
-            distance_x = Player.player_rect(0) - self.slime_rect(0)
-            distance_y = Player.player_rect(1) - self.slime_rect(1)
-            distance = (distance_x ** 2 + distance_y ** 2) ** 0.5
+        distance_x = Player.player_rect.x - self.slime_rect.x
+        distance_y = Player.player_rect.y - self.slime_rect.y
+        distance = (distance_x ** 2 + distance_y ** 2) ** 0.5
+        speed = 1
+        if distance != 0:
+            self.slime_rect.x += speed * distance_x / distance
+            self.slime_rect.y += speed * distance_y / distance
 
-            # Move the enemy toward the player
-            speed = 2
-            if distance != 0:
-                self.slime_rect[1] += speed * distance_x / distance
-                self.slime_rect[2] += speed * distance_y / distance
-
-Slimes = [Slime(), Slime(), Slime(), Slime(), Slime()]
-                                                   
-
-Player = Character()
+slime1 = Slime()
 
 while True:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             pygame.quit()
             exit()
+
+    screen.blit(bg_surf,(0,0))
+    slime1.movement()
+    screen.blit(slime1.slime_surf, slime1.slime_rect)
+
     
     keys = pygame.key.get_pressed()
     if keys[pygame.K_a]:
-        Player.player_rect.x -= 4
+            Player.player_rect.x -= 4
     if keys[pygame.K_d]:
-        Player.player_rect.x += 4
+            Player.player_rect.x += 4
     if keys[pygame.K_w]:
-        Player.player_rect.y -= 4
+            Player.player_rect.y -= 4
     if keys[pygame.K_s]:
-        Player.player_rect.y += 4
-            
-    
-    screen.blit(bg_surf,(0,0))
+            Player.player_rect.y += 4
+        
     screen.blit(Player.player_surf, Player.player_rect)
-    for slime in Slimes:
-        screen.blit(slime.slime_surf, slime.slime_rect)
-    slime.movement()
 
 
 
