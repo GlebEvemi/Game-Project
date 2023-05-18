@@ -1,9 +1,8 @@
 import pyautogui
 import pygame
-print(pyautogui.size())
+
 pygame.init()
 
-player_surf = pygame.image.load('player_walk_1.png').convert_alpha()
-player_rect = player_surf.get_rect(topleft=(400, 200))
+screen_width, screen_height = pyautogui.size()
 
-print(player_rect(1))
+print(screen_width, screen_height)

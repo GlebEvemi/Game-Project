@@ -3,23 +3,55 @@ from sys import exit
 import random
 import pyautogui
 
-
-
-
 pygame.init()
-screen = pygame.display.set_mode(pyautogui.size())
+screen = pygame.display.set_mode((0,0), pygame.FULLSCREEN)
+screen_width, screen_height = pyautogui.size()
 pygame.display.set_caption("SlimeArena")
 clock = pygame.time.Clock()
 
 bg_surf = pygame.image.load('nature.png').convert()
-
 class Character:
-    def __init__(self, health = 100):
+    def __init__(self, health = 100,score = 0):
         self.health = health
         self.alive = True
-        self.player_surf = pygame.image.load('player_walk_1.png').convert_alpha()
+        self.score = score
+        self.KNIGHT_IDLE = pygame.image.load('KNIGHT_IDLE.png').convert_alpha()
+        self.Knight_Running_Frame1 = pygame.image.load('KNIGHT_Running_Frame1.png').convert_alpha()
+        self.Knight_Running_Frame2 = pygame.image.load('KNIGHT_Running_Frame2.png').convert_alpha()
+        self.player_walk = [self.Knight_Running_Frame1, self.Knight_Running_Frame2]
+        self.player_index = 0
+        self.player_surf = self.player_walk[self.player_index]
         self.player_rect = self.player_surf.get_rect(topleft=(400, 200))
+
+    def player_animation_run(self):
+        self.player_index += 0.1
+        if self.player_index >= len(self.player_walk): self.player_index = 0
+        self.player_surf = self.player_walk[int(self.player_index)]
+
+    def movement(self):
+        keys = pygame.key.get_pressed()
+        self.player_surf = self.KNIGHT_IDLE
+        if keys[pygame.K_a]:
+            Player.player_rect.x -= 4
+            Player.player_animation_run()
+        if keys[pygame.K_d]:
+            Player.player_rect.x += 4
+            Player.player_animation_run()
+        if keys[pygame.K_w]:
+            Player.player_rect.y -= 4
+            Player.player_animation_run()
+        if keys[pygame.K_s]:
+            Player.player_rect.y += 4
+            Player.player_animation_run()
 Player = Character()
+class Diamond:
+    def __init__(self, cost = 5):
+        self.cost = cost
+        self.diamond_surf = pygame.image.load('purple_diamond.png').convert_alpha()
+        self.diamond_rect = self.diamond_surf.get_rect(topleft = (900, 900))
+
+Diamond1 = Diamond()
+
 
 class Slime:
     def __init__(self, health = 100):
@@ -34,11 +66,49 @@ class Slime:
         if distance != 0:
             self.slime_rect.x += speed * distance_x / distance
             self.slime_rect.y += speed * distance_y / distance
+
+
+def game_over():
+    game_over = True
+    while game_over:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                exit()
+            elif event.type == pygame.MOUSEBUTTONDOWN:
+                mouse_pos = pygame.mouse.get_pos()
+                if exit_button.collidepoint(mouse_pos):
+                    pygame.quit()
+                elif restart_button.collidepoint(mouse_pos):
+                    pass
+                    
+                    
+
+                    
+                    
+        screen.fill((0,0,0))
+        font = pygame.font.Font(None, 36)
+        text = font.render('Game Over', True, (255,255,255))
+        text_rect = text.get_rect(center=(1920 // 2 + 20, 1080 // 2))
+        screen.blit(text, text_rect)
+        
+        exit_button = pygame.Rect(1920 // 2 - 100, 1080 // 2 + 20, 100, 50)
+        pygame.draw.rect(screen, (255,255,255), exit_button)
+        font = pygame.font.Font(None, 24)
+        text = font.render("Exit", True, (0,0,0))
+        text_rect = text.get_rect(center = exit_button.center)
+        screen.blit(text, text_rect)
+        
+        restart_button = pygame.Rect(1920 // 2 + 50,  1080 // 2 + 20, 100, 50)
+        pygame.draw.rect(screen, (255,255,255), restart_button)
+        text = font.render("Restart", True,(0,0,0))
+        text_rect = text.get_rect(center = restart_button.center)
+        screen.blit(text, text_rect)
+        
+            
+        pygame.display.update()
 #Set up health bar font
 font = pygame.font.SysFont("Times New Roman", 24)
-
-#Set up score
-score = 0
 
 #Function to update the health bar
 def update_health_bar():
@@ -49,37 +119,33 @@ def update_health_bar():
 #Function to update the score
 def update_score():
     #Render the score text
-    score_text = font.render(f"Score: {score}", True, (0, 0, 0))
+    score_text = font.render(f"Score: {Player.score}", True, (0, 0, 0))
     screen.blit(score_text, (1000, 40))
 
-slime1 = Slime()
-
+Slime1 = Slime()
 while True:
+    game_active = True
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             pygame.quit()
             exit()
-    if Player.player_rect.colliderect(slime1.slime_rect):
-        score += 10
-
-    screen.blit(bg_surf,(0,0))
-    slime1.movement()
-    screen.blit(slime1.slime_surf, slime1.slime_rect)
-
+    if Player.player_rect.colliderect(Slime1.slime_rect):
+        game_active = False
+    if Player.player_rect.colliderect(Diamond1.diamond_rect):
+        Player.score += Diamond1.cost
     
-    keys = pygame.key.get_pressed()
-    if keys[pygame.K_a]:
-            Player.player_rect.x -= 4
-    if keys[pygame.K_d]:
-            Player.player_rect.x += 4
-    if keys[pygame.K_w]:
-            Player.player_rect.y -= 4
-    if keys[pygame.K_s]:
-            Player.player_rect.y += 4
-        
-    screen.blit(Player.player_surf, Player.player_rect)
-    update_health_bar()
-    update_score()
-    
-    pygame.display.update()
-    clock.tick(60)
+    if game_active:
+        screen.blit(bg_surf,(0,0))
+        Slime1.movement()
+        screen.blit(Slime1.slime_surf, Slime1.slime_rect)
+        Player.movement()
+        screen.blit(Player.player_surf, Player.player_rect)
+        screen.blit(Diamond1.diamond_surf, Diamond1.diamond_rect)
+        update_health_bar()
+        update_score()
+        pygame.display.update()
+        clock.tick(60)
+    elif game_active == False:
+        game_over()
+        game_active = True
+        continue
