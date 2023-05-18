@@ -34,6 +34,23 @@ class Slime:
         if distance != 0:
             self.slime_rect.x += speed * distance_x / distance
             self.slime_rect.y += speed * distance_y / distance
+#Set up health bar font
+font = pygame.font.SysFont("Times New Roman", 24)
+
+#Set up score
+score = 0
+
+#Function to update the health bar
+def update_health_bar():
+    #Render the health bar text
+    health_text = font.render(f"Health: {Player.health}", True, (0, 0, 0))
+    screen.blit(health_text, (1000, 10))
+
+#Function to update the score
+def update_score():
+    #Render the score text
+    score_text = font.render(f"Score: {score}", True, (0, 0, 0))
+    screen.blit(score_text, (1000, 40))
 
 slime1 = Slime()
 
@@ -42,6 +59,8 @@ while True:
         if event.type == pygame.QUIT:
             pygame.quit()
             exit()
+    if Player.player_rect.colliderect(slime1.slime_rect):
+        score += 10
 
     screen.blit(bg_surf,(0,0))
     slime1.movement()
@@ -59,24 +78,8 @@ while True:
             Player.player_rect.y += 4
         
     screen.blit(Player.player_surf, Player.player_rect)
-
-
-
-    """ screen.blit(ground_surface,(0,300))
-    pygame.draw.rect(screen, '#c0e8ec', score_rect)
-    
-    screen.blit(score_surf,score_rect) """
-
-
-    """ if snail_rect.x < -100:
-        snail_rect.x = 800
-    snail_rect.x -= 4 """
-    #screen.blit(snail_surf, snail_rect)
-    """ if player_rect.colliderect(snail_rect):
-        print('collision') """
-    """ mouse_pos = pygame.mouse.get_pos()
-    if player_rect.collidepoint(mouse_pos):
-        print(pygame.mouse.get_pressed()) """
+    update_health_bar()
+    update_score()
     
     pygame.display.update()
     clock.tick(60)
