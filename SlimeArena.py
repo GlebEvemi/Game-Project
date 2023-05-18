@@ -4,7 +4,7 @@ import random
 import pyautogui
 
 pygame.init()
-screen = pygame.display.set_mode((0,0), pygame.FULLSCREEN)
+screen = pygame.display.set_mode(pyautogui.size())
 screen_width, screen_height = pyautogui.size()
 pygame.display.set_caption("SlimeArena")
 clock = pygame.time.Clock()
@@ -15,6 +15,7 @@ class Character:
         self.health = health
         self.alive = True
         self.score = score
+        self.speed = 4
         self.KNIGHT_IDLE = pygame.image.load('KNIGHT_IDLE.png').convert_alpha()
         self.Knight_Running_Frame1 = pygame.image.load('KNIGHT_Running_Frame1.png').convert_alpha()
         self.Knight_Running_Frame2 = pygame.image.load('KNIGHT_Running_Frame2.png').convert_alpha()
@@ -22,6 +23,20 @@ class Character:
         self.player_index = 0
         self.player_surf = self.player_walk[self.player_index]
         self.player_rect = self.player_surf.get_rect(topleft=(400, 200))
+        self.player_width = self.KNIGHT_IDLE.get_width()
+        self.player_height = self.KNIGHT_IDLE.get_height()
+    def border_up(self):
+        self.player_rect.y = max([self.player_rect.y - self.speed, 0])
+        
+    def border_down(self):
+        self.player_rect.y = min([self.player_rect.y + self.speed, screen_height - self.player_height])
+        
+    def border_left(self):
+        self.player_rect.x = max([self.player_rect.x - self.speed, 0])
+        
+    def border_right(self):
+        self.player_rect.x = min([self.player_rect.x + self.speed, screen_width - self.player_width])
+
 
     def player_animation_run(self):
         self.player_index += 0.1
@@ -32,17 +47,21 @@ class Character:
         keys = pygame.key.get_pressed()
         self.player_surf = self.KNIGHT_IDLE
         if keys[pygame.K_a]:
-            Player.player_rect.x -= 4
+            Player.player_rect.x -= self.speed
             Player.player_animation_run()
+            Player.border_left()
         if keys[pygame.K_d]:
-            Player.player_rect.x += 4
+            Player.player_rect.x += self.speed
             Player.player_animation_run()
+            Player.border_right()
         if keys[pygame.K_w]:
-            Player.player_rect.y -= 4
+            Player.player_rect.y -= self.speed
             Player.player_animation_run()
+            Player.border_up()
         if keys[pygame.K_s]:
-            Player.player_rect.y += 4
+            Player.player_rect.y += self.speed
             Player.player_animation_run()
+            Player.border_down()
 Player = Character()
 class Diamond:
     def __init__(self, cost = 5):
@@ -130,9 +149,12 @@ while True:
             pygame.quit()
             exit()
     if Player.player_rect.colliderect(Slime1.slime_rect):
-        game_active = False
+        pass
     if Player.player_rect.colliderect(Diamond1.diamond_rect):
         Player.score += Diamond1.cost
+
+
+
     
     if game_active:
         screen.blit(bg_surf,(0,0))
