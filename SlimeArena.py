@@ -28,9 +28,9 @@ class Character(pygame.sprite.Sprite):
         self.Knight_Running_Frame2 = pygame.image.load('KNIGHT_Running_Frame2.png').convert_alpha()
         self.Knight_fight_Frame1 = pygame.image.load('KNIGHT_FIGHT_FRAME.png').convert_alpha()
         self.player_walk = [self.Knight_Running_Frame1, self.Knight_Running_Frame2]
-        self.player_index = 0
-        self.image = self.player_walk[self.player_index]
-        
+        self.frame_index = 0 
+        self.action = 0 #1: Idle   2: Runing    3:Atack
+        temp_list = []
         self.pos = (400,200)
         self.hitbox_rect = self.image.get_rect(center = self.pos)
 
