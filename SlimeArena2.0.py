@@ -4,6 +4,7 @@ import math
 from GameSettings import *
 import pyautogui
 import random
+import time 
 
 
 pygame.init()
@@ -38,6 +39,13 @@ class Player(pygame.sprite.Sprite):
         self.player_index += 0.1
         if self.player_index >= len(self.player_walk): self.player_index = 0
         self.image = self.player_walk[int(self.player_index)]
+
+    def fighting_animation(self):
+        self.fight_index = 0
+        while self.fight_index <= 1000000:
+            self.image = self.Knight_fight_Frame1
+            self.fight_index += 10
+        
     
     """ def border_up(self):
         self.pos.y = max([self.pos.y - self.speed, 0])
@@ -80,15 +88,14 @@ class Player(pygame.sprite.Sprite):
 
     def move(self):
         self.pos += (self.velocity_x, self.velocity_y)
-        if self.pos.x <= 0: self.pos.x = 0
-        if self.pos.x > WIDTH: 
-            self.pos.x = WIDTH
-        
-        if self.pos.y <= 0: self.pos.y = 0
-        if self.pos.y > HEIGHT:
-            self.pos.y = HEIGHT
         self.rect.center = self.pos
-
+        self.borders()
+        
+    def borders(self):
+        self.rect.left = max(self.rect.left, 0)
+        self.rect.right = min(self.rect.right, WIDTH)
+        self.rect.top = max(self.rect.top, 0)
+        self.rect.bottom = min(self.rect.bottom, HEIGHT)
 
     def update(self):
         self.user_input()
@@ -222,6 +229,13 @@ while True:
         if event.type == pygame.QUIT:
             pygame.quit()
             exit()
+        if event.type == pygame.MOUSEBUTTONDOWN:
+            mouse_clicked = True
+            left_click, middle_click, right_click = pygame.mouse.get_pressed()
+            if left_click and mouse_clicked:
+                player.fighting_animation()
+                mouse_clicked = False
+        
     
     if game_active:
         #Screen blit
