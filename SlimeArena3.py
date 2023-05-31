@@ -42,11 +42,12 @@ class Player(pygame.sprite.Sprite):
         self.attack_cooldown = 0
         self.update_time = pygame.time.get_ticks()
         self.animation_cooldown = 500
+        self.damage = 20
     
     def draw(self, surface):
         surface.blit(self.image, self.rect)
         
-        draw_health_bar(surface, self.rect.x, self.rect.y - 10, self.rect.width, 5, self.health, GREEN)
+        draw_health_bar(surface, self.rect.x, self.rect.y - 10, self.rect.width, 10, self.health, GREEN)
 
     def player_animation_run(self):
         self.player_walk_index += 0.1
@@ -65,7 +66,7 @@ class Player(pygame.sprite.Sprite):
             attacking_rect = pygame.Rect(self.rect.x, self.rect.y, 1.5 * self.rect.width, self.rect.height)
             for slime in slimes:
                 if attacking_rect.colliderect(slime.rect):
-                    slime.health -= 20  # Reduce slime's health by 20 upon hit
+                    slime.health -= self.damage  # Reduce slime's health by 20 upon hit
                     if slime.health <= 0:
                         slimes.remove(slime)
 
@@ -115,10 +116,20 @@ class Player(pygame.sprite.Sprite):
         self.rect.right = min(self.rect.right, WIDTH)
         self.rect.top = max(self.rect.top, 620)
         self.rect.bottom = min(self.rect.bottom, HEIGHT)
+    
+    #Function to update the score
+    def update_score(self):
+        #Render the score text
+        score_text = font.render(f"Score: {self.score}", True, (0, 0, 0))
+        screen.blit(score_text, (1000, 40))
 
     def update(self):
         self.user_input()
         self.move()
+        self.draw(screen)
+        self.update_score()
+        if player.health <= 0:
+            game_active = False
         
 player = Player()
 
@@ -135,6 +146,13 @@ class Slime(pygame.sprite.Sprite):
             self.health = 1
         self.attack_cooldown = 0
         self.attacking = False
+        self.damage = 10
+
+
+    def draw(self, surface):
+        #surface.blit(self.image, self.rect)
+        
+        draw_health_bar(surface, self.rect.x, self.rect.y - 10, self.rect.width, 10, self.health, GREEN)
 
     def movement(self):
         distance_x = player.rect.x - self.rect.x
@@ -153,12 +171,12 @@ class Slime(pygame.sprite.Sprite):
             
     def update(self):
         self.movement()
-        
+        self.draw(screen)
         if self.health <= 0:
             self.last_x , self.last_y = self.rect.centerx, self.rect.centery
             self.kill()
             diamond = Diamond()
-            diamond.rect.center = self.last_x, self.last_y 
+            diamond.rect.center = self.last_x, self.last_y
             all_sprites_group.add(diamond)
 
         # Handle slime attack
@@ -175,9 +193,18 @@ slime = Slime()
 class Diamond(pygame.sprite.Sprite):
     def __init__(self):
         super().__init__()
-        self.cost = 5
+        self.cost = None # blue_diamond == 5    red_diamond == 10
         self.alive = True
-        self.image = pygame.image.load("blue_diamond.png")
+        self.cure = None
+        self.image_list = ["blue_diamond.png", "purple_diamond.png"]
+        if random.randint(0, 100) < Purple_chance:
+            self.image = pygame.image.load(self.image_list[1])
+            self.cost = 10
+            self.cure = 10
+        else:
+            self.image = pygame.image.load(self.image_list[0])
+            self.cost = 5
+            self.cure = 5
         self.pos = pygame.Vector2(DIAMOND_START_X, DIAMOND_START_Y)
         self.rect = self.image.get_rect(center = self.pos)
     def update(self):
@@ -224,7 +251,7 @@ def reset_game():
     player.score = 0
     player.health = 100
     player.rect.center = (PLAYER_START_X, PLAYER_START_Y)
-
+    all_sprites_group.empty()
 #Set up health bar font
 font = pygame.font.SysFont("Times New Roman", 24)
 
@@ -269,11 +296,6 @@ def main_menu():
                     click = True
         pygame.display.update()
         clock.tick(60)
-#Function to update the score
-def update_score():
-    #Render the score text
-    score_text = font.render(f"Score: {player.score}", True, (0, 0, 0))
-    screen.blit(score_text, (1000, 40))
 
 def draw_health_bar(surface, x, y, width, height, health, color):
     # Calculate the width of the health bar based on the health percentage
@@ -309,25 +331,18 @@ def game():
             if event.type == pygame.QUIT:
                 pygame.quit()
                 exit()
-            if event.type == pygame.MOUSEBUTTONDOWN:
-                mouse_clicked = True
-                left_click, middle_click, right_click = pygame.mouse.get_pressed()
-                if left_click and mouse_clicked:
-                    mouse_clicked = False
-        
         
         if game_active:
             for slime in slimes:
                 slime.movement()
             #Screen blit
             screen.blit(background, (0,0))
-
             if len(slimes) == 0:
-                spawn_timer += clock.get_time() / 1000  # Convert clock time to seconds
+                spawn_timer += clock.get_time() / 1000 # Convert clock time to seconds
 
                 if spawn_timer >= slime_spawn_timer:
                     slime = Slime()
-                    slime.rect.center = (WIDTH - slime.rect.width, random.randint(0, HEIGHT - slime.rect.height))
+                    slime.rect.center = (WIDTH - slime.rect.width, random.randint(750, 1000)) #HEIGHT - slime.rect.height
                     slimes.append(slime)
                     all_sprites_group.add(slime)
                     spawn_timer = 0
@@ -337,31 +352,22 @@ def game():
                 if isinstance(sprite, Diamond):
                     if sprite.rect.colliderect(player.rect):
                         player.score += sprite.cost
-                        player.health += 1
+                        player.health += sprite.cure
                         all_sprites_group.remove(sprite)
                 if isinstance(sprite, Slime):
-                    sprites_to_remove = []  
-
+                    sprites_to_remove = []
                     for sprite in slimes:
                         if sprite.rect.colliderect(player.rect):
-                            sprites_to_remove.append(sprite)  
-                            player.health -= 5
-                            if player.health <= 0:
-                                game_active = False
+                            sprites_to_remove.append(sprite)
+                            player.health -= sprite.damage
 
                     for sprite in sprites_to_remove:
                         slimes.remove(sprite)
                         all_sprites_group.remove(sprite)
-                        diamond = Diamond()
-                        diamond.rect.center = sprite.rect.center
-                        all_sprites_group.add(diamond)
 
  
             all_sprites_group.draw(screen)
             all_sprites_group.update()
-
-            update_score()
-            player.draw(screen)
             
             pygame.display.update()
             
