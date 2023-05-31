@@ -18,7 +18,6 @@ clock = pygame.time.Clock()
 #Loads images
 background = pygame.image.load("nature.png").convert()
 
-
 class Player(pygame.sprite.Sprite):
     def __init__(self):
         super().__init__()
@@ -42,26 +41,33 @@ class Player(pygame.sprite.Sprite):
         self.attacking = False 
         self.attack_cooldown = 0
         self.update_time = pygame.time.get_ticks()
-        self.animation_cooldown = 200
+        self.animation_cooldown = 500
     
+    def draw(self, surface):
+        surface.blit(self.image, self.rect)
+        
+        draw_health_bar(surface, self.rect.x, self.rect.y - 10, self.rect.width, 5, self.health, GREEN)
 
     def player_animation_run(self):
         self.player_walk_index += 0.1
-        if self.player_walk_index >= len(self.player_walk): self.player_walk_index = 0
+        if self.player_walk_index >= len(self.player_walk):
+            self.player_walk_index = 0
         self.image = self.player_walk[int(self.player_walk_index)]
 
-    def atack(self):
+    def attack(self):
         if self.attack_cooldown <= 0:
             self.attacking = True
             for _ in range(len(self.player_fight)):
                 self.image = self.player_fight[self.player_fight_index]
                 self.player_fight_index += 1
-                if self.player_fight_index >= len(self.player_fight): 
+                if self.player_fight_index >= len(self.player_fight):
                     self.player_fight_index = 0
-            attacking_rect = pygame.Rect(self.rect.centerx, self.rect.y, 1.5 *self.rect.width, self.rect.height)
+            attacking_rect = pygame.Rect(self.rect.x, self.rect.y, 1.5 * self.rect.width, self.rect.height)
             for slime in slimes:
                 if attacking_rect.colliderect(slime.rect):
-                    print("HIT")
+                    slime.health -= 20  # Reduce slime's health by 20 upon hit
+                    if slime.health <= 0:
+                        slimes.remove(slime)
 
 
     def user_input(self):
@@ -87,7 +93,7 @@ class Player(pygame.sprite.Sprite):
                 self.player_animation_run()
                 #self.border_left()
             if keys[pygame.K_SPACE]:
-                self.atack()
+                self.attack()
                 self.attacking = False
                 self.attack_cooldown = 50
         
@@ -107,7 +113,7 @@ class Player(pygame.sprite.Sprite):
     def borders(self):
         self.rect.left = max(self.rect.left, 0)
         self.rect.right = min(self.rect.right, WIDTH)
-        self.rect.top = max(self.rect.top, 0)
+        self.rect.top = max(self.rect.top, 620)
         self.rect.bottom = min(self.rect.bottom, HEIGHT)
 
     def update(self):
@@ -123,7 +129,12 @@ class Slime(pygame.sprite.Sprite):
         self.image = pygame.image.load("Test1.png").convert_alpha()
         self.pos = pygame.Vector2(SLIME_START_X, SLIME_START_Y)
         self.rect = self.image.get_rect(center = self.pos)
-        self.speed = SLIME_SPEED
+        self.speed = random.choice(SLIME_SPEED)
+        self.health = random.choice(slime_health_list)
+        if self.speed == 3 or self.speed == 4 or self.speed == 5:
+            self.health = 1
+        self.attack_cooldown = 0
+        self.attacking = False
 
     def movement(self):
         distance_x = player.rect.x - self.rect.x
@@ -133,22 +144,34 @@ class Slime(pygame.sprite.Sprite):
             self.rect.x += self.speed * distance_x / distance
             self.rect.y += self.speed * distance_y / distance
     
+    def attack(self):
+        if self.attack_cooldown <= 0:
+            # Perform attack logic
+            self.attack_cooldown = 50  # Set the attack cooldown to 50 frames
+        else:
+            self.attack_cooldown -= 1  # Reduce attack cooldown by 1 in each frame
+            
     def update(self):
         self.movement()
+        
+        if self.health <= 0:
+            self.last_x , self.last_y = self.rect.centerx, self.rect.centery
+            self.kill()
+            diamond = Diamond()
+            diamond.rect.center = self.last_x, self.last_y 
+            all_sprites_group.add(diamond)
 
-def spawn():
-    slime_spawn_timer = 0
-    slime_spawn_interval = 0  # Spawn a slime every 15 seconds
-    max_slimes = 2  # Maximum number of slimes allowed at a time
-    if slime_spawn_timer <= 0 and len(slimes) < max_slimes:
-                slime = Slime()
-                slime.rect.center = (WIDTH - slime.rect.width, random.randint(0, HEIGHT - slime.rect.height))
-                slimes.append(slime)
-                all_sprites_group.add(slimes)
-                slime_spawn_timer = slime_spawn_interval
-    else:
-        slime_spawn_timer -= 1
+        # Handle slime attack
+        if not self.attacking:
+            self.attack()
+            self.attacking = True
+        else:
+            pass
+            # Attack animation code
 
+
+
+slime = Slime()
 class Diamond(pygame.sprite.Sprite):
     def __init__(self):
         super().__init__()
@@ -246,17 +269,25 @@ def main_menu():
                     click = True
         pygame.display.update()
         clock.tick(60)
-#Function to update the health bar
-def update_health_bar():
-    #Render the health bar text
-    health_text = font.render(f"Health: {player.health}", True, (0, 0, 0))
-    screen.blit(health_text, (1000, 10))
-
 #Function to update the score
 def update_score():
     #Render the score text
     score_text = font.render(f"Score: {player.score}", True, (0, 0, 0))
     screen.blit(score_text, (1000, 40))
+
+def draw_health_bar(surface, x, y, width, height, health, color):
+    # Calculate the width of the health bar based on the health percentage
+    red_width = int((health / 100) * width)
+
+    # Create the health bar rect and background rect
+    green_rect = pygame.Rect(x, y, width, height)
+    pygame.draw.rect(surface, RED, green_rect)
+
+    # Draw the red portion of the health bar
+    red_rect = pygame.Rect(x, y, red_width, height)
+    pygame.draw.rect(surface, GREEN, red_rect)
+
+
 
 slimes = [Slime()]
 all_sprites_group = pygame.sprite.Group()
@@ -268,12 +299,10 @@ def game():
 
     # Adding sprites to group
     all_sprites_group.add(player)
-    all_sprites_group.add(diamond)
     all_sprites_group.add(slimes)
 
-    slime_spawn_timer = 0
-    slime_spawn_interval = 0  # Spawn a slime every 15 seconds
-    max_slimes = 3  # Maximum number of slimes allowed at a time
+    spawn_timer = 0
+    slime_spawn_timer = 5   # Spawn a slime every 5 seconds
     while True:
         keys = pygame.key.get_pressed()
         for event in pygame.event.get():
@@ -288,41 +317,57 @@ def game():
         
         
         if game_active:
+            for slime in slimes:
+                slime.movement()
             #Screen blit
             screen.blit(background, (0,0))
 
-            if slime_spawn_timer <= 0 and len(slimes) < max_slimes:
+            if len(slimes) == 0:
+                spawn_timer += clock.get_time() / 1000  # Convert clock time to seconds
+
+                if spawn_timer >= slime_spawn_timer:
                     slime = Slime()
-                    slimes.append(slime)
                     slime.rect.center = (WIDTH - slime.rect.width, random.randint(0, HEIGHT - slime.rect.height))
-                    
-                    all_sprites_group.add(slimes)
-                    slime_spawn_timer = slime_spawn_interval
-            else:
-                slime_spawn_timer -= 1
-
+                    slimes.append(slime)
+                    all_sprites_group.add(slime)
+                    spawn_timer = 0
+ 
             for sprite in all_sprites_group:
-
-
+                
                 if isinstance(sprite, Diamond):
                     if sprite.rect.colliderect(player.rect):
                         player.score += sprite.cost
+                        player.health += 1
                         all_sprites_group.remove(sprite)
                 if isinstance(sprite, Slime):
-                    if sprite.rect.colliderect(player.rect):
-                        all_sprites_group.remove(sprite)
-                        slimes.remove(sprite)
-                        player.health -= 40
-                        if player.health <= 0:
-                            game_active = False
+                    sprites_to_remove = []  
 
+                    for sprite in slimes:
+                        if sprite.rect.colliderect(player.rect):
+                            sprites_to_remove.append(sprite)  
+                            player.health -= 5
+                            if player.health <= 0:
+                                game_active = False
+
+                    for sprite in sprites_to_remove:
+                        slimes.remove(sprite)
+                        all_sprites_group.remove(sprite)
+                        diamond = Diamond()
+                        diamond.rect.center = sprite.rect.center
+                        all_sprites_group.add(diamond)
+
+ 
             all_sprites_group.draw(screen)
             all_sprites_group.update()
 
-            update_health_bar()
             update_score()
+            player.draw(screen)
             
             pygame.display.update()
+            
+            for slime in slimes:
+                slime.movement() 
+                
             clock.tick(FPS)
             
         else:  # Game is over
