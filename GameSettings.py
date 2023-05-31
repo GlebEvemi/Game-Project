@@ -22,7 +22,7 @@ slime_health_list = [100, 200]
 #DIAMOND SETTINGS
 DIAMOND_START_X = 900
 DIAMOND_START_Y = 900
-Purple_chance = 10
+Purple_chance = 17
 
 #HEALTH_COLORS
 GREEN = (0, 255, 0)

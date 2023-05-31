@@ -128,8 +128,6 @@ class Player(pygame.sprite.Sprite):
         self.move()
         self.draw(screen)
         self.update_score()
-        if player.health <= 0:
-            game_active = False
         
 player = Player()
 
@@ -146,7 +144,7 @@ class Slime(pygame.sprite.Sprite):
             self.health = 1
         self.attack_cooldown = 0
         self.attacking = False
-        self.damage = 10
+        self.damage = 50
 
 
     def draw(self, surface):
@@ -251,8 +249,10 @@ def reset_game():
     player.score = 0
     player.health = 100
     player.rect.center = (PLAYER_START_X, PLAYER_START_Y)
-    all_sprites_group.empty()
-#Set up health bar font
+    for sprite in all_sprites_group:
+        if isinstance(sprite, Diamond):
+            sprite.kill()
+# Set up health bar font
 font = pygame.font.SysFont("Times New Roman", 24)
 
 def draw_text(text, font, color, surface, x, y):
@@ -265,7 +265,6 @@ def draw_text(text, font, color, surface, x, y):
 def main_menu():
     # A variable to check for the status later
     click = False
- 
     while True:
  
         screen.fill((0,0,0))
@@ -360,6 +359,8 @@ def game():
                         if sprite.rect.colliderect(player.rect):
                             sprites_to_remove.append(sprite)
                             player.health -= sprite.damage
+                            if player.health <= 0:
+                                game_active = False
 
                     for sprite in sprites_to_remove:
                         slimes.remove(sprite)
