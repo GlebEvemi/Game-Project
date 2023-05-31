@@ -126,7 +126,7 @@ class Slime(pygame.sprite.Sprite):
     def __init__(self):
         super().__init__()
         self.alive = True
-        self.image = pygame.image.load("Test1.png").convert_alpha()
+        self.image = pygame.image.load("red_slime.png").convert_alpha()
         self.pos = pygame.Vector2(SLIME_START_X, SLIME_START_Y)
         self.rect = self.image.get_rect(center = self.pos)
         self.speed = random.choice(SLIME_SPEED)
@@ -380,4 +380,3 @@ def game():
                 game_active = True
                 restart_requested = False
 main_menu()
-    
