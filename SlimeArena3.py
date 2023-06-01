@@ -6,6 +6,7 @@ from pygame.locals import *
 import sys
 import pyautogui
 import random
+import time
 
 
 pygame.init()
@@ -42,7 +43,8 @@ class Player(pygame.sprite.Sprite):
         self.attack_cooldown = 0
         self.update_time = pygame.time.get_ticks()
         self.animation_cooldown = 500
-        self.damage = 20
+        self.damage = 15
+        self.level = 1
     
     def draw(self, surface):
         surface.blit(self.image, self.rect)
@@ -66,11 +68,10 @@ class Player(pygame.sprite.Sprite):
             attacking_rect = pygame.Rect(self.rect.x, self.rect.y, 1.5 * self.rect.width, self.rect.height)
             for slime in slimes:
                 if attacking_rect.colliderect(slime.rect):
-                    slime.health -= self.damage  # Reduce slime's health by 20 upon hit
+                    slime.health -= self.damage  # Reduce slime's health by self.damage upon hit
                     if slime.health <= 0:
                         slimes.remove(slime)
-
-
+                        
     def user_input(self):
         if self.attacking == False:
             self.velocity_x = 0
@@ -97,6 +98,8 @@ class Player(pygame.sprite.Sprite):
                 self.attack()
                 self.attacking = False
                 self.attack_cooldown = 50
+            if keys[pygame.K_u]:
+                self.level_up()
         
         if self.velocity_x != 0 and self.velocity_y != 0: #moving diagonally
             self.velocity_x /= math.sqrt(2)
@@ -117,17 +120,58 @@ class Player(pygame.sprite.Sprite):
         self.rect.top = max(self.rect.top, 620)
         self.rect.bottom = min(self.rect.bottom, HEIGHT)
     
+    def level_up(self):
+        if self.score >= 10:
+            self.level += 1
+            self.score -= 10
+            if self.level == 2:
+                self.damage += 1
+                self.speed += 0.1
+            elif self.level == 3:
+                self.damage += 2
+                self.speed += 0.2
+            elif self.level == 4:
+                self.damage += 3
+                self.speed += 0.3
+            elif self.level >= 5:
+                self.damage += 1
+                self.speed += 0.1
+    
     #Function to update the score
     def update_score(self):
         #Render the score text
         score_text = font.render(f"Score: {self.score}", True, (0, 0, 0))
-        screen.blit(score_text, (1000, 40))
-
+        screen.blit(score_text, (0, 10))
+    
+    def update_damage(self):
+        #Render the damage text
+        damage_text = font.render(f"Damage: {self.damage}", True, (0, 0, 0))
+        screen.blit(damage_text, (0, 40))
+    
+    def update_speed(self):
+        #Render the speed text
+        speed_text = font.render(f"Speed: {self.speed}", True, (0, 0, 0))
+        screen.blit(speed_text, (0, 70))
+        
+    def user_info(self):
+        #Render the info text
+        if self.score >= 10:
+            info_text = font.render(f"You have: {self.score} score. You can exchange 10 score on 1 level upgrade by pressing U key!", True, (0, 0, 0))
+            screen.blit(info_text, (0, 100))
+            
+    def draw_level(self, surface):
+        level_text = font.render(f"Level: {self.level}", True, (0, 0, 0))  
+        surface.blit(level_text, (self.rect.centerx - level_text.get_width() // 2, self.rect.top - 40))  
+        
     def update(self):
         self.user_input()
         self.move()
         self.draw(screen)
         self.update_score()
+        self.update_damage()
+        self.user_info()
+        self.update_speed()
+        self.draw_level(screen)
         
 player = Player()
 
@@ -140,11 +184,17 @@ class Slime(pygame.sprite.Sprite):
         self.rect = self.image.get_rect(center = self.pos)
         self.speed = random.choice(SLIME_SPEED)
         self.health = random.choice(slime_health_list)
-        if self.speed == 3 or self.speed == 4 or self.speed == 5:
+        if self.speed >= 4:
             self.health = 1
+        elif self.speed == 3:
+            self.health = 50
+        elif self.speed == 2:
+            self.health = 100
+        elif self.speed == 1:
+            self.health = 150
         self.attack_cooldown = 0
         self.attacking = False
-        self.damage = 50
+        self.damage = 40
 
 
     def draw(self, surface):
@@ -159,7 +209,7 @@ class Slime(pygame.sprite.Sprite):
         if distance != 0:
             self.rect.x += self.speed * distance_x / distance
             self.rect.y += self.speed * distance_y / distance
-    
+
     def attack(self):
         if self.attack_cooldown <= 0:
             # Perform attack logic
@@ -191,17 +241,17 @@ slime = Slime()
 class Diamond(pygame.sprite.Sprite):
     def __init__(self):
         super().__init__()
-        self.cost = None # blue_diamond == 5    red_diamond == 10
+        self.cost = None # blue_diamond == 2  red_diamond == 5
         self.alive = True
         self.cure = None
         self.image_list = ["blue_diamond.png", "purple_diamond.png"]
         if random.randint(0, 100) < Purple_chance:
             self.image = pygame.image.load(self.image_list[1])
-            self.cost = 10
+            self.cost = 5
             self.cure = 10
         else:
             self.image = pygame.image.load(self.image_list[0])
-            self.cost = 5
+            self.cost = 2
             self.cure = 5
         self.pos = pygame.Vector2(DIAMOND_START_X, DIAMOND_START_Y)
         self.rect = self.image.get_rect(center = self.pos)
@@ -238,7 +288,7 @@ def game_over():
         text_rect = text.get_rect(center=exit_button.center)
         screen.blit(text, text_rect)
 
-        restart_button = pygame.Rect(WIDTH // 2 + 50, HEIGHT // 2 + 20, 100, 50)
+        restart_button = pygame.Rect(WIDTH // 2 + 10, HEIGHT // 2 + 20, 100, 50)
         pygame.draw.rect(screen, (255, 255, 255), restart_button)
         text = font.render("Restart", True, (0, 0, 0))
         text_rect = text.get_rect(center=restart_button.center)
@@ -248,6 +298,9 @@ def game_over():
 def reset_game():
     player.score = 0
     player.health = 100
+    player.level = 1
+    player.damage = 15
+    player.speed = 6
     player.rect.center = (PLAYER_START_X, PLAYER_START_Y)
     for sprite in all_sprites_group:
         if isinstance(sprite, Diamond):
@@ -297,6 +350,9 @@ def main_menu():
         clock.tick(60)
 
 def draw_health_bar(surface, x, y, width, height, health, color):
+    # Limit the maximum health value to 100
+    health = min(health, 100)
+    
     # Calculate the width of the health bar based on the health percentage
     red_width = int((health / 100) * width)
 
@@ -369,7 +425,6 @@ def game():
  
             all_sprites_group.draw(screen)
             all_sprites_group.update()
-            
             pygame.display.update()
             
             for slime in slimes:
