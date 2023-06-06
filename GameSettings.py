@@ -1,4 +1,7 @@
 import pyautogui
+import pygame
+
+pygame.init()
 
 #Game setup
 WIDTH, HEIGHT = pyautogui.size()
@@ -9,7 +12,6 @@ FPS = 60
 PLAYER_START_X = 400
 PLAYER_START_Y = 200
 PLAYER_SPEED = 6
-
 
 
 #SLIME SETTINGS
@@ -23,6 +25,7 @@ slime_health_list = [100, 200]
 DIAMOND_START_X = 900
 DIAMOND_START_Y = 900
 Purple_chance = 17
+start_game_sound = pygame.mixer.Sound("sounds/start_game.wav")
 
 #HEALTH_COLORS
 GREEN = (0, 255, 0)
