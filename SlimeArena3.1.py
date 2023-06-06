@@ -7,21 +7,51 @@ import sys
 import pyautogui
 import random
 
-
-
 pygame.init()
 
 # Creating the window
 screen = pygame.display.set_mode(pyautogui.size())
 pygame.display.set_caption('Slime Arena')
-# Setting the clock(FPS)
+# Setting the clock (FPS)
 clock = pygame.time.Clock()
 
 # Loads background
 background = pygame.image.load("Other_pictures/nature.png").convert()
 
 class Player(pygame.sprite.Sprite):
+    """
+    Represents the player character in the game.
+
+    Attributes:
+        Knight_idle (pygame.Surface): Image representing the idle state of the player character.
+        image (pygame.Surface): Current image of the player character.
+        Knight_Running_Frame1 (pygame.Surface): First frame of the running animation.
+        Knight_Running_Frame2 (pygame.Surface): Second frame of the running animation.
+        Knight_fight_Frame1 (pygame.Surface): First frame of the fighting animation.
+        Knight_fight_Frame2 (pygame.Surface): Second frame of the fighting animation.
+        player_walk (list): List of player walking frames.
+        player_fight (list): List of player fighting frames.
+        pos (pygame.Vector2): Current position of the player character.
+        rect (pygame.Rect): Rectangle representing the player character's position and size.
+        player_walk_index (float): Index of the current walking frame.
+        player_fight_index (int): Index of the current fighting frame.
+        score (int): Player's score.
+        health (int): Player's health.
+        speed (float): Player's movement speed.
+        player_width (int): Width of the player character's image.
+        player_height (int): Height of the player character's image.
+        attacking (bool): Flag indicating if the player is currently attacking.
+        attack_cooldown (int): Cooldown time between consecutive attacks.
+        update_time (int): Time of the last update.
+        animation_cooldown (int): Cooldown time between consecutive frame updates.
+        damage (int): Amount of damage inflicted by the player's attacks.
+        level (int): Player's current level.
+    """
+
     def __init__(self):
+        """
+        Initializes a new instance of the Player class.
+        """
         super().__init__()
         self.Knight_idle = pygame.image.load('Knight_Frames/KNIGHT_IDLE.png').convert_alpha()
         self.image = self.Knight_idle
@@ -32,7 +62,7 @@ class Player(pygame.sprite.Sprite):
         self.player_walk = [self.Knight_Running_Frame1, self.Knight_Running_Frame2]
         self.player_fight = [self.Knight_fight_Frame1, self.Knight_fight_Frame2]
         self.pos = pygame.Vector2(PLAYER_START_X, PLAYER_START_Y)
-        self.rect = self.image.get_rect(center = self.pos)
+        self.rect = self.image.get_rect(center=self.pos)
         self.player_walk_index = 0
         self.player_fight_index = 0
         self.score = 0
@@ -40,25 +70,36 @@ class Player(pygame.sprite.Sprite):
         self.speed = PLAYER_SPEED
         self.player_width = self.Knight_fight_Frame1.get_width()
         self.player_height = self.Knight_fight_Frame1.get_height()
-        self.attacking = False 
+        self.attacking = False
         self.attack_cooldown = 0
         self.update_time = pygame.time.get_ticks()
         self.animation_cooldown = 500
         self.damage = 15
         self.level = 1
-    
+
     def draw(self, surface):
+        """
+        Draws the player character on the specified surface.
+
+        Args:
+            surface (pygame.Surface): Surface on which to draw the player character.
+        """
         surface.blit(self.image, self.rect)
-        
         draw_health_bar(surface, self.rect.x, self.rect.y - 10, self.rect.width, 10, self.health, GREEN)
 
     def player_animation_run(self):
+        """
+        Updates the player character's image for the running animation.
+        """
         self.player_walk_index += 0.1
         if self.player_walk_index >= len(self.player_walk):
             self.player_walk_index = 0
         self.image = self.player_walk[int(self.player_walk_index)]
 
     def attack(self):
+        """
+        Performs the player character's attack action.
+        """
         if self.attack_cooldown <= 0:
             self.attacking = True
             for _ in range(len(self.player_fight)):
@@ -72,9 +113,12 @@ class Player(pygame.sprite.Sprite):
                     slime.health -= self.damage  # Reduce slime's health by self.damage upon hit
                     if slime.health <= 0:
                         slimes.remove(slime)
-                        
+
     def user_input(self):
-        if self.attacking == False:
+        """
+        Handles the user input for controlling the player character.
+        """
+        if self.attacking is False:
             self.velocity_x = 0
             self.velocity_y = 0
             keys = pygame.key.get_pressed()
@@ -82,46 +126,54 @@ class Player(pygame.sprite.Sprite):
             if keys[pygame.K_w]:
                 self.velocity_y = -self.speed
                 self.player_animation_run()
-                #self.border_up()
+                # self.border_up()
             if keys[pygame.K_s]:
                 self.velocity_y = self.speed
                 self.player_animation_run()
-                #self.border_down()
+                # self.border_down()
             if keys[pygame.K_d]:
                 self.velocity_x = self.speed
                 self.player_animation_run()
-                #self.border_right()
+                # self.border_right()
             if keys[pygame.K_a]:
                 self.velocity_x = -self.speed
                 self.player_animation_run()
-                #self.border_left()
+                # self.border_left()
             if keys[pygame.K_SPACE]:
                 self.attack()
                 self.attacking = False
                 self.attack_cooldown = 50
             if keys[pygame.K_u]:
                 self.level_up()
-        
-        if self.velocity_x != 0 and self.velocity_y != 0: #moving diagonally
+
+        if self.velocity_x != 0 and self.velocity_y != 0:  # moving diagonally
             self.velocity_x /= math.sqrt(2)
             self.velocity_y /= math.sqrt(2)
 
-
     def move(self):
+        """
+        Moves the player character based on the user input.
+        """
         self.rect.centerx += self.velocity_x
         self.rect.centery += self.velocity_y
-        #apply attack cooldown
+        # apply attack cooldown
         if player.attack_cooldown > 0:
             player.attack_cooldown -= 20
         self.borders()
 
     def borders(self):
+        """
+        Restricts the player character within the game window's borders.
+        """
         self.rect.left = max(self.rect.left, 0)
         self.rect.right = min(self.rect.right, WIDTH)
         self.rect.top = max(self.rect.top, 620)
         self.rect.bottom = min(self.rect.bottom, HEIGHT)
-    
+
     def level_up(self):
+        """
+        Increases the player character's level and upgrades its attributes.
+        """
         if self.score >= 10:
             self.level += 1
             self.score -= 10
@@ -137,34 +189,49 @@ class Player(pygame.sprite.Sprite):
             elif self.level >= 5:
                 self.damage += 1
                 self.speed += 0.1
-    
-    #Function to update the score
+
     def update_score(self):
-        #Render the score text
+        """
+        Updates and renders the player's score on the screen.
+        """
         score_text = font.render(f"Score: {self.score}", True, (0, 0, 0))
         screen.blit(score_text, (0, 10))
-    
+
     def update_damage(self):
-        #Render the damage text
+        """
+        Updates and renders the player's damage on the screen.
+        """
         damage_text = font.render(f"Damage: {self.damage}", True, (0, 0, 0))
         screen.blit(damage_text, (0, 40))
-    
+
     def update_speed(self):
-        #Render the speed text
+        """
+        Updates and renders the player's speed on the screen.
+        """
         speed_text = font.render(f"Speed: {self.speed:.2f}", True, (0, 0, 0))
         screen.blit(speed_text, (0, 70))
-        
+
     def user_info(self):
-        #Render the info text
+        """
+        Renders the information about score exchange for level upgrades on the screen.
+        """
         if self.score >= 10:
-            info_text = font.render(f"You have: {self.score} score. You can exchange 10 score on 1 level upgrade by pressing U key!", True, (0, 0, 0))
+            info_text = font.render(
+                f"You have: {self.score} score. You can exchange 10 score on 1 level upgrade by pressing U key!",
+                True, (0, 0, 0))
             screen.blit(info_text, (0, 100))
-            
+
     def draw_level(self, surface):
-        level_text = font.render(f"Level: {self.level}", True, (0, 0, 0))  
-        surface.blit(level_text, (self.rect.centerx - level_text.get_width() // 2, self.rect.top - 40))  
-        
+        """
+        Renders the player's level on the screen.
+        """
+        level_text = font.render(f"Level: {self.level}", True, (0, 0, 0))
+        surface.blit(level_text, (self.rect.centerx - level_text.get_width() // 2, self.rect.top - 40))
+
     def update(self):
+        """
+        Updates the player character.
+        """
         self.user_input()
         self.move()
         self.draw(screen)
@@ -173,16 +240,41 @@ class Player(pygame.sprite.Sprite):
         self.user_info()
         self.update_speed()
         self.draw_level(screen)
-        
+
 player = Player()
 
 class Slime(pygame.sprite.Sprite):
+    """
+    Represents a slime enemy in the game.
+
+    Attributes:
+        alive (bool): Flag indicating if the slime is alive.
+        image (pygame.Surface): The image representing the slime.
+        pos (pygame.Vector2): The position of the slime.
+        rect (pygame.Rect): The rectangle used for collision detection and positioning.
+        speed (int): The speed of the slime.
+        health (int): The health of the slime.
+        damage (int): The damage the slime can inflict on the player.
+
+    Methods:
+        __init__(): Initializes a new instance of the Slime class.
+        draw(surface): Draws the slime's health bar on the specified surface.
+        movement(): Controls the slime's movement towards the player.
+        borders(): Restricts the slime's movement within the game window's borders.
+        update(): Updates the slime's state and position.
+
+    """
+
     def __init__(self):
+        """
+        Initializes a new instance of the Slime class.
+        Randomly assigns attributes such as speed, health, and damage.
+        """
         super().__init__()
         self.alive = True
         self.image = pygame.image.load("Other_pictures/red_slime.png").convert_alpha()
         self.pos = pygame.Vector2(SLIME_START_X, SLIME_START_Y)
-        self.rect = self.image.get_rect(center = self.pos)
+        self.rect = self.image.get_rect(center=self.pos)
         self.speed = random.choice(SLIME_SPEED)
         self.health = random.choice(slime_health_list)
         if self.speed >= 4:
@@ -193,42 +285,80 @@ class Slime(pygame.sprite.Sprite):
             self.health = 100
         elif self.speed == 1:
             self.health = 150
-        self.damage = (20 * self.speed) * player.level
+        self.damage = (10 * self.speed) + (10 * player.level)
 
+    def draw(self, surface):
+        """
+        Draws the slime's health bar on the specified surface.
 
-    def draw(self, surface):       
+        Args:
+            surface (pygame.Surface): The surface on which to draw the health bar.
+        """
         draw_health_bar(surface, self.rect.x, self.rect.y - 10, self.rect.width, 10, self.health, GREEN)
 
     def movement(self):
+        """
+        Controls the slime's movement towards the player.
+        """
         distance_x = player.rect.x - self.rect.x
         distance_y = player.rect.y - self.rect.y
         distance = (distance_x ** 2 + distance_y ** 2) ** 0.5
         if distance != 0:
             self.rect.x += self.speed * distance_x / distance
             self.rect.y += self.speed * distance_y / distance
-    
+
     def borders(self):
+        """
+        Restricts the slime's movement within the game window's borders.
+        """
         self.rect.left = max(self.rect.left, 0)
         self.rect.right = min(self.rect.right, WIDTH)
         self.rect.top = max(self.rect.top, 700)
         self.rect.bottom = min(self.rect.bottom, HEIGHT)
-           
+
     def update(self):
+        """
+        Updates the slime's state and position.
+        Handles the slime's movement, drawing the health bar, and checking for death.
+        """
         self.movement()
         self.draw(screen)
         if self.health <= 0:
-            self.last_x , self.last_y = self.rect.centerx, self.rect.centery
+            self.last_x, self.last_y = self.rect.centerx, self.rect.centery
             self.kill()
             diamond = Diamond()
             diamond.rect.center = self.last_x, self.last_y
             all_sprites_group.add(diamond)
         self.borders()
-
+        
 slime = Slime()
+
 class Diamond(pygame.sprite.Sprite):
+    """
+    Represents a diamond object in the game.
+
+    Attributes:
+        cost (int): The cost of the diamond (blue = 2, red = 5).
+        alive (bool): Flag indicating if the diamond is alive.
+        cure (int): The amount of health the diamond can restore to the player.
+        image_list (list): The list of image paths for different diamond types.
+        image (pygame.Surface): The image representing the diamond.
+        pos (pygame.Vector2): The position of the diamond.
+        rect (pygame.Rect): The rectangle used for collision detection and positioning.
+
+    Methods:
+        __init__(): Initializes a new instance of the Diamond class.
+        update(): Updates the state of the diamond.
+
+    """
+
     def __init__(self):
+        """
+        Initializes a new instance of the Diamond class.
+        Randomly assigns attributes such as cost, cure, and image based on chance.
+        """
         super().__init__()
-        self.cost = None # blue_diamond == 2  red_diamond == 5
+        self.cost = None
         self.alive = True
         self.cure = None
         self.image_list = ["Other_pictures/blue_diamond.png", "Other_pictures/purple_diamond.png"]
@@ -241,14 +371,26 @@ class Diamond(pygame.sprite.Sprite):
             self.cost = 2
             self.cure = 5 + player.level
         self.pos = pygame.Vector2(DIAMOND_START_X, DIAMOND_START_Y)
-        self.rect = self.image.get_rect(center = self.pos)
+        self.rect = self.image.get_rect(center=self.pos)
+
     def update(self):
+        """
+        Updates the state of the diamond.
+        This method is empty as there is no specific update  for the diamond.
+        """
         pass
 
         
 diamond = Diamond()
 
 def game_over():
+    """
+    Displays the game over screen and handles user input for restarting or exiting the game.
+
+    Returns:
+        bool: True if the user chooses to restart the game, False otherwise.
+
+    """
     while True:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -280,9 +422,17 @@ def game_over():
         text = font.render("Restart", True, (0, 0, 0))
         text_rect = text.get_rect(center=restart_button.center)
         screen.blit(text, text_rect)
+
         pygame.display.update()
     
 def reset_game():
+    """
+    Resets the game state to the initial values.
+    - Resets the player's score, health, level, damage, and speed.
+    - Moves the player's sprite to the starting position.
+    - Removes all Diamond sprites from the game.
+
+    """
     player.score = 0
     player.health = 100
     player.level = 1
@@ -292,35 +442,45 @@ def reset_game():
     for sprite in all_sprites_group:
         if isinstance(sprite, Diamond):
             sprite.kill()
+
 # Set up health bar font
 font = pygame.font.SysFont("Times New Roman", 24)
 
 def draw_text(text, font, color, surface, x, y):
+    """
+    Draws text on the given surface at the specified coordinates.
+
+    Args:
+        text (str): The text to be drawn.
+        font (pygame.font.Font): The font to be used for the text.
+        color (tuple): The RGB color value of the text.
+        surface (pygame.Surface): The surface on which the text will be drawn.
+        x (int): The x-coordinate of the top-left corner of the text.
+        y (int): The y-coordinate of the top-left corner of the text.
+
+    """
     text = font.render(text, font, color)
     text_rect = text.get_rect()
     text_rect.topleft = (x, y)
     surface.blit(text, text_rect)
- 
-# Main container function that holds the buttons and game functions
+
+
 def main_menu():
-    # A variable to check for the status later
+    """
+    Displays the main menu screen and handles user input for starting or quitting the game.
+
+    """
     click = False
     while True:
- 
-        screen.fill((0,0,0))
- 
+        screen.fill((0, 0, 0))
         mouse_x, mouse_y = pygame.mouse.get_pos()
 
-        #creating buttons
         play_button = pygame.Rect(WIDTH // 2 - 100, HEIGHT // 2 - 25, 200, 50)
-        #defining functions when a certain button is pressed
         if play_button.collidepoint((mouse_x, mouse_y)):
             if click:
                 game()
         pygame.draw.rect(screen, (255, 0, 0), play_button)
- 
-        #writing text on top of button
-        draw_text('PLAY', font, (255,255,255), screen, WIDTH // 2 - 30, HEIGHT // 2 - 10)
+        draw_text('PLAY', font, (255, 255, 255), screen, WIDTH // 2 - 30, HEIGHT // 2 - 10)
 
         click = False
         for event in pygame.event.get():
@@ -332,11 +492,25 @@ def main_menu():
                     pygame.quit()
                     sys.exit()
             if event.type == MOUSEBUTTONDOWN:
-                    click = True
+                click = True
+
         pygame.display.update()
         clock.tick(60)
-
+        
 def draw_health_bar(surface, x, y, width, height, health, color):
+    """
+    Draws a health bar on the given surface at the specified position.
+
+    Args:
+        surface (pygame.Surface): The surface on which to draw the health bar.
+        x (int): The x-coordinate of the top-left corner of the health bar.
+        y (int): The y-coordinate of the top-left corner of the health bar.
+        width (int): The width of the health bar.
+        height (int): The height of the health bar.
+        health (int): The current health value.
+        color (tuple): The RGB color value of the health bar.
+
+    """
     # Limit the maximum health value to 100
     health = min(health, 100)
     
@@ -352,11 +526,14 @@ def draw_health_bar(surface, x, y, width, height, health, color):
     pygame.draw.rect(surface, GREEN, red_rect)
 
 
-
 slimes = [Slime()]
 all_sprites_group = pygame.sprite.Group()
-#Game loop
+
 def game():
+    """
+    The main game loop that handles gameplay mechanics, sprite interactions, and screen updates.
+
+    """
     game_active = True
     restart_requested = False
     start_game_sound.play()
