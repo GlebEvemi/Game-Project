@@ -7,6 +7,7 @@ import sys
 import pyautogui
 import random
 
+
 pygame.init()
 
 # Creating the window
@@ -211,6 +212,13 @@ class Player(pygame.sprite.Sprite):
         speed_text = font.render(f"Speed: {self.speed:.2f}", True, (0, 0, 0))
         screen.blit(speed_text, (0, 70))
 
+    def instruction(self):
+        """
+        Updates and renders the player's speed on the screen.
+        """
+        instruction_text = font.render(f"MOVING: W - UP, S - DOWN, A - LEFT, D - RIGHT, SPACE - ATTACK", True, (0, 0, 0))
+        screen.blit(instruction_text, (0, 100))
+        
     def user_info(self):
         """
         Renders the information about score exchange for level upgrades on the screen.
@@ -219,7 +227,7 @@ class Player(pygame.sprite.Sprite):
             info_text = font.render(
                 f"You have: {self.score} score. You can exchange 10 score on 1 level upgrade by pressing U key!",
                 True, (0, 0, 0))
-            screen.blit(info_text, (0, 100))
+            screen.blit(info_text, (0, 130))
 
     def draw_level(self, surface):
         """
@@ -239,6 +247,7 @@ class Player(pygame.sprite.Sprite):
         self.update_damage()
         self.user_info()
         self.update_speed()
+        self.instruction()
         self.draw_level(screen)
 
 player = Player()
@@ -388,42 +397,56 @@ def game_over():
     Displays the game over screen and handles user input for restarting or exiting the game.
 
     Returns:
-        bool: True if the user chooses to restart the game, False otherwise.
+        bool: True if the user chooses to restart the game.
 
     """
+    click = False
+
+    background = pygame.image.load("Other_pictures/nature.png").convert()
+
+    restart_button = pygame.Rect(WIDTH // 2 - 75, HEIGHT // 2 + 100, 150, 50)
+    restart_font = pygame.font.Font(None, 40)
+    restart_text = restart_font.render("Restart", True, (255, 255, 255))
+    restart_text_rect = restart_text.get_rect(center=restart_button.center)
+
+    exit_button = pygame.Rect(WIDTH // 2 - 75, HEIGHT // 2 + 200, 150, 50)
+    exit_text = restart_font.render("Exit", True, (255, 255, 255))
+    exit_text_rect = exit_text.get_rect(center=exit_button.center)
+
     while True:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 pygame.quit()
-                exit()
+                sys.exit()
             elif event.type == pygame.MOUSEBUTTONDOWN:
-                mouse_pos = pygame.mouse.get_pos()
-                if exit_button.collidepoint(mouse_pos):
-                    pygame.quit()
-                    exit()
-                elif restart_button.collidepoint(mouse_pos):
-                    return True
+                if event.button == 1:
+                    click = True
 
-        screen.fill((0, 0, 0))
+        mouse_x, mouse_y = pygame.mouse.get_pos()
+
+        if restart_button.collidepoint((mouse_x, mouse_y)):
+            if click:
+                return True
+
+        if exit_button.collidepoint((mouse_x, mouse_y)):
+            if click:
+                pygame.quit()
+                sys.exit()
+
+        screen.blit(background, (0, 0))
+
         font = pygame.font.Font(None, 36)
         text = font.render('Game Over', True, (255, 255, 255))
         text_rect = text.get_rect(center=(WIDTH // 2, HEIGHT // 2))
         screen.blit(text, text_rect)
 
-        exit_button = pygame.Rect(WIDTH // 2 - 100, HEIGHT // 2 + 20, 100, 50)
-        pygame.draw.rect(screen, (255, 255, 255), exit_button)
-        font = pygame.font.Font(None, 24)
-        text = font.render("Exit", True, (0, 0, 0))
-        text_rect = text.get_rect(center=exit_button.center)
-        screen.blit(text, text_rect)
-
-        restart_button = pygame.Rect(WIDTH // 2 + 10, HEIGHT // 2 + 20, 100, 50)
-        pygame.draw.rect(screen, (255, 255, 255), restart_button)
-        text = font.render("Restart", True, (0, 0, 0))
-        text_rect = text.get_rect(center=restart_button.center)
-        screen.blit(text, text_rect)
+        pygame.draw.rect(screen, (225, 193, 110), restart_button)
+        pygame.draw.rect(screen, (225, 193, 110), exit_button)
+        screen.blit(restart_text, restart_text_rect)
+        screen.blit(exit_text, exit_text_rect)
 
         pygame.display.update()
+        clock.tick(FPS)
     
 def reset_game():
     """
@@ -468,21 +491,38 @@ def draw_text(text, font, color, surface, x, y):
 def main_menu():
     """
     Displays the main menu screen and handles user input for starting or quitting the game.
-
+    
     """
+    
     click = False
-    while True:
-        screen.fill((0, 0, 0))
-        mouse_x, mouse_y = pygame.mouse.get_pos()
 
-        play_button = pygame.Rect(WIDTH // 2 - 100, HEIGHT // 2 - 25, 200, 50)
-        if play_button.collidepoint((mouse_x, mouse_y)):
+    background = pygame.image.load("Other_pictures/nature.png").convert()
+
+    title_font = pygame.font.Font(None, 80)
+    title_text = title_font.render("Slime Arena", True, (255, 255, 255))
+    title_rect = title_text.get_rect(center=(WIDTH // 2, HEIGHT // 2 - 100))
+
+    start_button = pygame.Rect(WIDTH // 2 - 75, HEIGHT // 2, 150, 50)
+    start_font = pygame.font.Font(None, 40)
+    start_text = start_font.render("Start", True, (255, 255, 255))
+    start_text_rect = start_text.get_rect(center=start_button.center)
+
+    exit_button = pygame.Rect(WIDTH // 2 - 75, HEIGHT // 2 + 100, 150, 50)
+    exit_text = start_font.render("Exit", True, (255, 255, 255))
+    exit_text_rect = exit_text.get_rect(center=exit_button.center)
+    
+    click = False
+    
+    running = True
+    while running:
+        mouse_x, mouse_y = pygame.mouse.get_pos()
+        if start_button.collidepoint((mouse_x, mouse_y)):
             if click:
                 game()
-        pygame.draw.rect(screen, (255, 0, 0), play_button)
-        draw_text('PLAY', font, (255, 255, 255), screen, WIDTH // 2 - 30, HEIGHT // 2 - 10)
-
-        click = False
+        elif exit_button.collidepoint((mouse_x, mouse_y)):
+            if click:
+                pygame.quit()
+                exit()
         for event in pygame.event.get():
             if event.type == QUIT:
                 pygame.quit()
@@ -493,9 +533,20 @@ def main_menu():
                     sys.exit()
             if event.type == MOUSEBUTTONDOWN:
                 click = True
+        
+        keys = pygame.key.get_pressed()
+        if keys[pygame.K_RETURN]:
+            game()
 
-        pygame.display.update()
-        clock.tick(60)
+        screen.blit(background, (0, 0))
+        screen.blit(title_text, title_rect)
+        pygame.draw.rect(screen, (225, 193, 110), start_button)
+        pygame.draw.rect(screen, (225, 193, 110), exit_button)
+        screen.blit(start_text, start_text_rect)
+        screen.blit(exit_text, exit_text_rect)
+
+        pygame.display.flip()
+        clock.tick(FPS)
         
 def draw_health_bar(surface, x, y, width, height, health, color):
     """
