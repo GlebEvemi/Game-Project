@@ -17,7 +17,7 @@ pygame.display.set_caption('Slime Arena')
 clock = pygame.time.Clock()
 
 # Loads background
-background = pygame.image.load("Other_pictures/nature.png").convert()
+background = pygame.image.load("Other_pictures/nature.png").convert() # Used to convert the pygame. Surface to the same pixel format as the one you use for final display
 
 class Player(pygame.sprite.Sprite):
     """
