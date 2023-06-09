@@ -13,6 +13,8 @@ We are using 2 files, 1 is the game(Slime Arena), and second is the GameSetting 
 
 Main idea of the game : We have 1 player, who is getting attack by slimes. Player should kill them. We got a score of killed slimes. If the player kills the slime then he will get a gem and it counts to his score. The player got 100 health. Player has opportunity to get level up.
 
+These libraries need to download: 
+
 W-A-S-D is the standart move, by pressing U you will upgrade, and by pressing space you will attack.
 
 When player got 10 score he can exchange it for a level up, that will give him speed boost, damage boost and slimes's damage will increase.
